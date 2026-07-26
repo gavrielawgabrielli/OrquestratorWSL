@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define PIPE_NAME R"(\\.\pipe\OrquestradorWSLPipe)"
 
@@ -12,6 +13,11 @@ typedef enum {
     CMD_REPAIR_WSL = 6
 } WslCommand;
 
+typedef struct {
+    DWORD codigo;       // 200 = sucesso, 500 = erro, 400 = comando inválido
+    DWORD statusWSL;    // 1=ativado, 2=desativado, 3=instalado, 4=desinstalado, 5=atualizado, 6=reparado, 0=indefinido
+} RespostaWSL;
+
 int main() {
     HANDLE hPipe = CreateFileA(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (hPipe == INVALID_HANDLE_VALUE) {
@@ -22,7 +28,6 @@ int main() {
         printf("========\n");
         return 1;
     }
-
 
     printf("\n");
     printf("-----------------------------------------\n");
@@ -42,33 +47,46 @@ int main() {
     printf("\033[;0m");
 
     int opcao;
-    printf("\033[;35m");
-    printf("Este e o Menu\n");
-    printf("escolha uma das opções abaixo:\n");
-    printf("\033[0m");
+    while(1) {
+        printf("\n");
+        printf("-----------------------------------------\n");
+        printf("\n");
+        printf("\033[;35m");
+        printf("Este e o Menu\n");
+        printf("escolha uma das opções abaixo:\n");
+        printf("\033[0m");
 
-    printf("\033[;32m");
-    printf("1. Habilitar WSL\n");
-    printf("2. Desabilitar WSL\n");
-    printf("\033[0m");
+        printf("\033[;32m");
+        printf("1. Habilitar WSL\n");
+        printf("2. Desabilitar WSL\n");
+        printf("\033[0m");
 
-    printf("\033[;33m");
-    printf("3. Instalar WSL\n");
-    printf("4. Desinstalar WSL\n");
-    printf("\033[0m");
+        printf("\033[;33m");
+        printf("3. Instalar WSL\n");
+        printf("4. Desinstalar WSL\n");
+        printf("\033[0m");
 
-    printf("\033[;31m");
-    printf("5. Atualizar WSL\n");
-    printf("6. Reparar WSL\n");
-    printf("\033[0m");
+        printf("\033[;31m");
+        printf("5. Atualizar WSL\n");
+        printf("6. Reparar WSL\n");
+        printf("\033[0m");
 
-    printf("\033[;31m");
-    printf("7. Sair\n");
-    printf("\033[0m");
-    char buffer[10];
-    fgets(buffer, sizeof(buffer), stdin);
-    opcao = atoi(buffer);
-    scanf("%d", &opcao);
+        printf("\033[;31m");
+        printf("7. Sair\n");
+        printf("\033[0m");
+    
+        printf("Escolha uma opção: ");
+        if (scanf("%d", &opcao) != 1) {
+            printf("Entrada inválida. Por favor, insira um número.\n");
+            // Limpa o buffer de entrada
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+            continue;
+        }
+        if (opcao < 1 || opcao > 7) {
+            printf("Opção inválida. Por favor, escolha uma opção entre 1 e 7.\n");
+            continue;
+        }
 
     DWORD cmd;
     switch (opcao) {
@@ -93,25 +111,40 @@ int main() {
         case 7:
             printf("Saindo...\n");
             CloseHandle(hPipe);
+            Sleep(10000); // Aguarda 10 segundos antes de sair
             return 0;
         default: 
         printf("Opção inválida\n"); 
-        CloseHandle(hPipe);
-            return 1;
+        continue;
     }
 
-    DWORD bytesWritten, bytesRead;
-    DWORD resposta = 0;
-    WriteFile(hPipe, &cmd, sizeof(DWORD), &bytesWritten, NULL);
-    ReadFile(hPipe, &resposta, sizeof(DWORD), &bytesRead, NULL);
+     DWORD bytesWritten, bytesRead;
+        RespostaWSL resposta = {0};
+        if (!WriteFile(hPipe, &cmd, sizeof(DWORD), &bytesWritten, NULL)) {
+            printf("Erro ao enviar comando.\n");
+            continue;
+        }
+        if (!ReadFile(hPipe, &resposta, sizeof(RespostaWSL), &bytesRead, NULL)) {
+            printf("Erro ao ler resposta.\n");
+            continue;
+        }
+
+        if (resposta.codigo == 200) {
+            printf("Comando executado com sucesso.\n");
+            printf("Código de resposta: %lu\n", resposta.codigo);
+            printf("Status do WSL: %lu\n", resposta.statusWSL);
+        } else if (resposta.codigo == 400) {
+            printf("Comando inválido.\n");
+            printf("Código de resposta: %lu\n", resposta.codigo);
+        } else if (resposta.codigo == 500) {
+            printf("Erro ao executar o comando.\n");
+            printf("Código de resposta: %lu\n", resposta.codigo);
+        } else {
+            printf("Falha na execução.\n");
+            printf("Código de resposta: %lu\n", resposta.codigo);
+        }       
+    }  
+
     CloseHandle(hPipe);
-
-    if (resposta == 200) {
-        printf("Comando executado com sucesso.\n");
-        printf("Código de resposta: %lu\n", resposta);
-    } else {
-        printf("Falha na execução.\n");
-        printf("Código de resposta: %lu\n", resposta);
-    }
-
+    return 0;
 }
