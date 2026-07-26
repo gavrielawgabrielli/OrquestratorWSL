@@ -1,167 +1,90 @@
+#include <windows.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-void displayMenu() {
+#define PIPE_NAME "\\\\.\\pipe\\OrquestradorWSLPipe"
+
+typedef enum {
+    CMD_ENABLE_WSL = 1,
+    CMD_DISABLE_WSL = 2,
+    CMD_INSTALL_WSL = 3,
+    CMD_UNINSTALL_WSL = 4
+} WslCommand;
+
+int main() {
+    HANDLE hPipe = CreateFileA(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (hPipe == INVALID_HANDLE_VALUE) {
+        printf("========\n");
+        printf("Serviço não está em execução. Execute como admin para instalar o Maestro WSL.\n");
+        printf("========\n");
+        return 1;
+    }
+
+    printf("\033[;96m");
+    printf("\n===============================\n");
+    printf("Bem-vindo ao Orquestrador WSL!\n");
+    printf("\033[;0m");
+    printf("\033[;36m");
+    printf("Este programa permite ativar, desativar, instalar e desinstalar o WSL (Windows Subsystem for Linux) no Windows.\n");
+    printf("Todos os comandos são executados com privilégios de administrador.\n");
+    printf("Tome cuidado ao executar comandos que podem afetar o sistema.\n");
+    printf("\033[;0m");
+    printf("\033[;96m");
+    printf("===============================\n");
+    printf("\033[;0m");
+
+    int opcao;
     printf("\033[;35m");
-    printf("\n");
-    printf("Menu:\n");
-    printf("\n");
+    printf("Este e o Menu\n");
+    printf("escolha uma das opções abaixo:\n");
+    printf("\033[0m");
+
     printf("\033[;32m");
-    printf("1. Ativar recursos WSL\n");
-    printf("2. Desativar recursos WSL\n");
+    printf("1. Habilitar WSL\n");
+    printf("2. Desabilitar WSL\n");
+    printf("\033[0m");
+
     printf("\033[;33m");
     printf("3. Instalar WSL\n");
     printf("4. Desinstalar WSL\n");
-    printf("5. Reparar WSL\n");
-    printf("\033[;31m");
-    printf("6. Sair\n");
     printf("\033[0m");
-}
 
-void activateWSL() {
-    printf("===============================\n");
-    printf("Ativando recursos WSL...\n");
-    printf("===============================\n");
-    int result1 = system("powershell -NoProfile -WindowStyle Hidden -Command \"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart\"");
-    int result2 = system("powershell -NoProfile -WindowStyle Hidden -Command \"Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart\"");
-    if (result1 == 0 && result2 == 0) {
-        printf("\n===============================\n");
-        printf("Recursos WSL ativados com sucesso!\n");
-        printf("Por favor, reinicie a máquina para aplicar as alterações.\n");
-        printf("===============================\n");
-    } else {
-        printf("\n===============================\n");
-        printf("Erro ao ativar recursos WSL.\n");
-        printf("===============================\n");
+    printf("\033[;31m");
+    printf("5. Atualizar WSL\n");
+    printf("6. Reparar WSL\n");
+    printf("\033[0m");
+    scanf("%d", &opcao);
+
+    DWORD cmd;
+    switch (opcao) {
+        case 1: cmd = CMD_ENABLE_WSL; 
+        printf("Habilitando WSL...\n");
+        break;
+        case 2: cmd = CMD_DISABLE_WSL; 
+        printf("Desabilitando WSL...\n"); 
+        break;
+        case 3: cmd = CMD_INSTALL_WSL; 
+        printf("Instalando WSL...\n"); 
+        break;
+        case 4: cmd = CMD_UNINSTALL_WSL; 
+        printf("Desinstalando WSL...\n"); 
+        break;
+        default: 
+        printf("Opção inválida\n"); 
+        return 1;
     }
-}
 
-void deactivateWSL() {
-    printf("===============================\n");
-    printf("Desativando recursos WSL...\n");
-    printf("===============================\n");
-    int result1 = system("powershell -NoProfile -WindowStyle Hidden -Command \"Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart\"");
-    int result2 = system("powershell -NoProfile -WindowStyle Hidden -Command \"Disable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -NoRestart\"");
-    if (result1 == 0 && result2 == 0) {
-        printf("\n===============================\n");
-        printf("Recursos WSL desativados com sucesso!\n");
-        printf("Por favor, reinicie a máquina para aplicar as alterações.\n");
-        printf("===============================\n");
+    DWORD bytesWritten, bytesRead;
+    DWORD resposta = 0;
+    WriteFile(hPipe, &cmd, sizeof(DWORD), &bytesWritten, NULL);
+    ReadFile(hPipe, &resposta, sizeof(DWORD), &bytesRead, NULL);
+    CloseHandle(hPipe);
+
+    if (resposta == 200) {
+        printf("Comando executado com sucesso.\n");
+        printf("Código de resposta: %lu\n", resposta);
     } else {
-        printf("\n===============================\n");
-        printf("Erro ao desativar recursos WSL.\n");
-        printf("===============================\n");
+        printf("Falha na execução.\n");
+        printf("Código de resposta: %lu\n", resposta);
     }
-}
-
-void installWSL() {
-    printf("===============================\n");
-    printf("Instalando WSL...\n");
-    printf("===============================\n");
-    int result = system("powershell -NoProfile -WindowStyle Hidden -Command \"wsl --install\"");
-    if (result == 0) {
-        printf("\n===============================\n");
-        printf("WSL instalado com sucesso!\n");
-        printf("Por favor, reinicie a máquina para aplicar as alterações.\n");
-        printf("===============================\n");
-    } else {
-        printf("\n===============================\n");
-        printf("Erro ao instalar WSL.\n");
-        printf("===============================\n");
-    }
-}
-
-void uninstallWSL() {
-    printf("===============================\n");
-    printf("Desinstalando WSL...\n");
-    printf("===============================\n");
-    int result = system("powershell -NoProfile -WindowStyle Hidden -Command \"wsl --uninstall\"");
-    if (result == 0) {
-        printf("\n===============================\n");
-        printf("WSL desinstalado com sucesso!\n");
-        printf("Por favor, reinicie a máquina para aplicar as alterações.\n");
-        printf("===============================\n");
-    } else {
-        printf("\n===============================\n");
-        printf("Erro ao desinstalar WSL.\n");
-        printf("===============================\n");
-    }
-}
-
-void repairWSL() {
-    printf("===============================\n");
-    printf("Reparando WSL...\n");
-    printf("===============================\n");
-    int result1 = system("powershell -NoProfile -WindowStyle Hidden -Command \"wsl --uninstall\"");
-    int result2 = system("powershell -NoProfile -WindowStyle Hidden -Command \"wsl --install\"");
-    if (result1 == 0 && result2 == 0) {
-        printf("\n===============================\n");
-        printf("WSL reparado com sucesso!\n");
-        printf("Por favor, reinicie a máquina para aplicar as alterações.\n");
-        printf("===============================\n");
-    } else {
-        printf("\n===============================\n");
-        printf("Erro ao reparar WSL.\n");
-        printf("===============================\n");
-    }
-}
-
-int main() {
-    
-     printf("\n===============================\n");
-    if (system("powershell -NoProfile -WindowStyle Hidden -Command \"Get-Command wsl\" >nul 2>&1") != 0) {
-        printf("WSL não está instalado.\n");
-    } else {
-        printf("WSL já está instalado.\n");
-        if (system("powershell -NoProfile -WindowStyle Hidden -Command \"Get-Command wsl --version\" >nul 2>&1") != 0) {
-            printf("WSL não está atualizado. Atualizando...\n");
-        } else {
-            printf("WSL já está atualizado.\n");
-        }
-        int result = system("powershell -NoProfile -WindowStyle Hidden -Command \"wsl --update\"");
-        if (result == 0) {
-            printf("WSL atualizado com sucesso!\n");
-        } else {
-            printf("Erro ao atualizar WSL.\n");
-        }
-    }   
-     printf("\n===============================\n");
-
-    printf("\n");
-    printf("-----------------------------------------\n");
-    printf("\n");
-
-    int choice;
-    printf("\033[96mBem-vindo ao Orquestrador WSL!\033[0m\n");
-    printf("\033[36mEste programa permite ativar, desativar, instalar, desinstalar e reparar o WSL (Windows Subsystem for Linux) no Windows.\033[0m\n");
-    do {
-        displayMenu();
-        printf("Escolha uma opção: ");
-        scanf("%d", &choice);
-        switch (choice) {
-            case 1:
-                activateWSL();
-                break;
-            case 2:
-                deactivateWSL();
-                break;
-            case 3:
-                installWSL();
-                break;
-            case 4:
-                uninstallWSL();
-                break;
-            case 5:
-                repairWSL();
-                break;
-            case 6:
-                printf("Saindo...\n");
-                break;
-            default:
-                printf("Opção inválida!\n");
-        }
-    } while (choice != 6);
-
     return 0;
 }
