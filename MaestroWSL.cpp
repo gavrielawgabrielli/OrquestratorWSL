@@ -1,10 +1,49 @@
 #include <windows.h>
 #include <stdio.h>
+#include <string.h>
 
 char g_ServiceName[] = "OrquestradorWSLService";
 #define SERVICE_NAME g_ServiceName
 #define PIPE_NAME R"(\\.\pipe\OrquestradorWSLPipe)"
 #define BUFFER_SIZE 128
+
+void InstallService() {
+    SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+    if (!hSCM) return;
+    char path[MAX_PATH];
+    GetModuleFileName(NULL, path, MAX_PATH);
+    SC_HANDLE hService = CreateService(
+        hSCM,
+        SERVICE_NAME,
+        "Orquestrador WSL Maestro Service",
+        SERVICE_ALL_ACCESS,
+        SERVICE_WIN32_OWN_PROCESS,
+        SERVICE_AUTO_START,   
+        SERVICE_ERROR_NORMAL,
+        path,
+        NULL, NULL, NULL, NULL, NULL
+    );
+    if (hService) {
+       
+        StartService(hService, 0, NULL);   
+        CloseServiceHandle(hService);
+    }
+    CloseServiceHandle(hSCM);
+}
+
+void UninstallService() {
+    SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!hSCM) return;
+    SC_HANDLE hService = OpenService(hSCM, SERVICE_NAME, DELETE);
+    if (hService) {
+        // Para o serviço se estiver rodando
+        SERVICE_STATUS status;
+        ControlService(hService, SERVICE_CONTROL_STOP, &status);
+        DeleteService(hService);
+        CloseServiceHandle(hService);
+    }
+    CloseServiceHandle(hSCM);
+}
 
 typedef enum {
     CMD_NONE = 0,
@@ -20,23 +59,38 @@ SERVICE_STATUS        g_ServiceStatus = {0};
 SERVICE_STATUS_HANDLE g_StatusHandle = NULL;
 HANDLE                g_StopEvent = NULL;
 
+typedef struct {
+    DWORD codigo;       // 200 = sucesso, 500 = erro, 400 = comando inválido
+    DWORD statusWSL;    // 1=ativado, 2=desativado, 3=instalado, 4=desinstalado, 5=atualizado, 6=reparado, 0=indefinido
+} RespostaWSL;
+
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
 DWORD WINAPI ServiceCtrlHandlerEx(DWORD control, DWORD eventType, LPVOID eventData, LPVOID context);
 DWORD WINAPI PipeWorkerThread(LPVOID lpParam);
-void ProcessarComando(DWORD cmd);
+void ProcessarComando(DWORD cmd, RespostaWSL *pResposta);
 
-int main() {
+int main(int argc, char *argv[]) {  
+    if (argc > 1) {
+        if (strcmp(argv[1], "--install") == 0) {
+            InstallService();
+            return 0;
+        } else if (strcmp(argv[1], "--uninstall") == 0) {
+            UninstallService();
+            return 0;
+        }
+    }
+
     SERVICE_TABLE_ENTRY ServiceTable[] = {
         { SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain },
         { NULL, NULL }
     };
 
-    // Conecta o processo principal ao Gerenciador de Serviços do Windows (SCM)
     if (!StartServiceCtrlDispatcher(ServiceTable)) {
         return GetLastError();
     }
     return 0;
 }
+
 
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv) {
     g_StatusHandle = RegisterServiceCtrlHandlerExA(SERVICE_NAME, ServiceCtrlHandlerEx, NULL);
@@ -89,8 +143,7 @@ DWORD WINAPI PipeWorkerThread(LPVOID lpParam) {
     HANDLE hPipe;
     DWORD bytesRead, bytesWritten;
     DWORD comandoRecebido = 0;
-    DWORD resposta = 200;
-
+    RespostaWSL resposta = {0};
 
     while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
         hPipe = CreateNamedPipeA(
@@ -112,8 +165,9 @@ DWORD WINAPI PipeWorkerThread(LPVOID lpParam) {
         BOOL connected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
         if (connected) {
             if (ReadFile(hPipe, &comandoRecebido, sizeof(DWORD), &bytesRead, NULL)) {
-                ProcessarComando(comandoRecebido);
-                WriteFile(hPipe, &resposta, sizeof(DWORD), &bytesWritten, NULL);
+                ProcessarComando(comandoRecebido, &resposta);
+                // Envia a estrutura completa de uma vez
+                WriteFile(hPipe, &resposta, sizeof(RespostaWSL), &bytesWritten, NULL);
             }
         }
 
@@ -123,30 +177,75 @@ DWORD WINAPI PipeWorkerThread(LPVOID lpParam) {
     return 0;
 }
 
-void ProcessarComando(DWORD cmd) {
+void ProcessarComando(DWORD cmd, RespostaWSL *pResposta) {
+    pResposta->codigo = 200;       // sucesso por padrão
+    pResposta->statusWSL = 0;      // indefinido até ser preenchido
+
+    int result = 0;
     switch (cmd) {
         case CMD_ENABLE_WSL:
-            system("dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart");
-            system("dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart");
+            result = system("dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart");
+            if (result == 0) {
+                result = system("dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart");
+            }
+            if (result == 0) {
+                pResposta->statusWSL = 1;  // ativado
+            } else {
+                pResposta->codigo = 500;
+            }
             break;
+
         case CMD_DISABLE_WSL:
-            system("dism.exe /online /disable-feature /featurename:Microsoft-Windows-Subsystem-Linux /norestart");
-            system("dism.exe /online /disable-feature /featurename:VirtualMachinePlatform /norestart");
+            result = system("dism.exe /online /disable-feature /featurename:Microsoft-Windows-Subsystem-Linux /norestart");
+            if (result == 0) {
+                result = system("dism.exe /online /disable-feature /featurename:VirtualMachinePlatform /norestart");
+            }
+            if (result == 0) {
+                pResposta->statusWSL = 2;  // desativado
+            } else {
+                pResposta->codigo = 500;
+            }
             break;
+
         case CMD_INSTALL_WSL:
-            system("wsl.exe --install --no-distribution");
+            if (system("wsl.exe --install --no-distribution") == 0) {
+                pResposta->statusWSL = 3;  // instalado
+            } else {
+                pResposta->codigo = 500;
+            }
             break;
+
         case CMD_UNINSTALL_WSL:
-            system("wsl.exe --uninstall");
+            if (system("wsl.exe --uninstall") == 0) {
+                pResposta->statusWSL = 4;  // desinstalado
+            } else {
+                pResposta->codigo = 500;
+            }
             break;
+
         case CMD_UPDATE_WSL:
-            system("wsl.exe --update");
+            if (system("wsl.exe --update") == 0) {
+                pResposta->statusWSL = 5;  // atualizado
+            } else {
+                pResposta->codigo = 500;
+            }
             break;
+
         case CMD_REPAIR_WSL:
-            system("wsl.exe --uninstall");
-            system("wsl.exe --install --no-distribution");
+            // tenta desinstalar e instalar
+            result = system("wsl.exe --uninstall");
+            if (result == 0) {
+                result = system("wsl.exe --install --no-distribution");
+            }
+            if (result == 0) {
+                pResposta->statusWSL = 6;  // reparado
+            } else {
+                pResposta->codigo = 500;
+            }
             break;
+
         default:
-            break;
+            pResposta->codigo = 400;   // comando inválido
+            pResposta->statusWSL = 0;
     }
 }

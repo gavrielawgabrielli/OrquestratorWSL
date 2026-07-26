@@ -1,23 +1,32 @@
 #include <windows.h>
 #include <stdio.h>
 
-#define PIPE_NAME "\\\\.\\pipe\\OrquestradorWSLPipe"
+#define PIPE_NAME R"(\\.\pipe\OrquestradorWSLPipe)"
 
 typedef enum {
     CMD_ENABLE_WSL = 1,
     CMD_DISABLE_WSL = 2,
     CMD_INSTALL_WSL = 3,
-    CMD_UNINSTALL_WSL = 4
+    CMD_UNINSTALL_WSL = 4,
+    CMD_UPDATE_WSL = 5,
+    CMD_REPAIR_WSL = 6
 } WslCommand;
 
 int main() {
     HANDLE hPipe = CreateFileA(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (hPipe == INVALID_HANDLE_VALUE) {
         printf("========\n");
-        printf("Serviço não está em execução. Execute como admin para instalar o Maestro WSL.\n");
+        printf("Serviço não está em execução.");
+        printf(" Execute como admin para instalar o Maestro WSL:\n");
+        printf("MaestroWSL --install\n");
         printf("========\n");
         return 1;
     }
+
+
+    printf("\n");
+    printf("-----------------------------------------\n");
+    printf("\n");
 
     printf("\033[;96m");
     printf("\n===============================\n");
@@ -52,6 +61,13 @@ int main() {
     printf("5. Atualizar WSL\n");
     printf("6. Reparar WSL\n");
     printf("\033[0m");
+
+    printf("\033[;31m");
+    printf("7. Sair\n");
+    printf("\033[0m");
+    char buffer[10];
+    fgets(buffer, sizeof(buffer), stdin);
+    opcao = atoi(buffer);
     scanf("%d", &opcao);
 
     DWORD cmd;
@@ -68,9 +84,20 @@ int main() {
         case 4: cmd = CMD_UNINSTALL_WSL; 
         printf("Desinstalando WSL...\n"); 
         break;
+        case 5: cmd = CMD_UPDATE_WSL; 
+        printf("Atualizando WSL...\n"); 
+        break;
+        case 6: cmd = CMD_REPAIR_WSL; 
+        printf("Reparando WSL...\n"); 
+        break;
+        case 7:
+            printf("Saindo...\n");
+            CloseHandle(hPipe);
+            return 0;
         default: 
         printf("Opção inválida\n"); 
-        return 1;
+        CloseHandle(hPipe);
+            return 1;
     }
 
     DWORD bytesWritten, bytesRead;
@@ -86,5 +113,5 @@ int main() {
         printf("Falha na execução.\n");
         printf("Código de resposta: %lu\n", resposta);
     }
-    return 0;
+
 }
