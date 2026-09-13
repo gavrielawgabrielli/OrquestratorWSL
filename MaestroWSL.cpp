@@ -10,24 +10,32 @@ char g_ServiceName[] = "OrquestradorWSLService";
 
 void InstallService() {
     SC_HANDLE hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
-    if (!hSCM) return;
+    if (!hSCM) {
+        printf("Erro ao abrir SCM: %lu\n", GetLastError());
+        return;
+    }
     char path[MAX_PATH];
     GetModuleFileName(NULL, path, MAX_PATH);
     SC_HANDLE hService = CreateService(
         hSCM,
-        SERVICE_NAME,
-        "Orquestrador WSL Maestro Service",
+        SERVICE_NAME,                // nome interno (identificador)
+        "Orquestrador WSL Maestro",  // nome de exibição (pode ser diferente)
         SERVICE_ALL_ACCESS,
         SERVICE_WIN32_OWN_PROCESS,
-        SERVICE_AUTO_START,   
+        SERVICE_AUTO_START,
         SERVICE_ERROR_NORMAL,
         path,
         NULL, NULL, NULL, NULL, NULL
     );
     if (hService) {
-       
-        StartService(hService, 0, NULL);   
+        if (!StartService(hService, 0, NULL)) {
+            printf("Erro ao iniciar serviço: %lu\n", GetLastError());
+        } else {
+            printf("Serviço instalado e iniciado com sucesso!\n");
+        }
         CloseServiceHandle(hService);
+    } else {
+        printf("Erro ao criar serviço: %lu\n", GetLastError());
     }
     CloseServiceHandle(hSCM);
 }
