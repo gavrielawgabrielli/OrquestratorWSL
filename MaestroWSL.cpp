@@ -78,7 +78,7 @@ DWORD WINAPI ServiceCtrlHandlerEx(DWORD control, DWORD eventType, LPVOID eventDa
 DWORD WINAPI PipeWorkerThread(LPVOID lpParam);
 void ProcessarComando(DWORD cmd, RespostaWSL *pResposta);
 
-int main(int argc, char *argv[]) {  
+int main(int argc, char *argv[]) {
     if (argc > 1) {
         if (strcmp(argv[1], "--install") == 0) {
             InstallService();
@@ -174,6 +174,11 @@ DWORD WINAPI PipeWorkerThread(LPVOID lpParam) {
         BOOL connected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
         if (connected) {
             if (ReadFile(hPipe, &comandoRecebido, sizeof(DWORD), &bytesRead, NULL)) {
+                if (comandoRecebido = CMD_NONE) {
+                    DisconnectNamedPipe(hPipe);
+                    CloseHandle(hPipe);
+                    break;
+                }
                 ProcessarComando(comandoRecebido, &resposta);
                 // Envia a estrutura completa de uma vez
                 WriteFile(hPipe, &resposta, sizeof(RespostaWSL), &bytesWritten, NULL);

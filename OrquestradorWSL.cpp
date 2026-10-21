@@ -5,6 +5,7 @@
 #define PIPE_NAME R"(\\.\pipe\OrquestradorWSLPipe)"
 
 typedef enum {
+    CMD_NONE = 0,
     CMD_ENABLE_WSL = 1,
     CMD_DISABLE_WSL = 2,
     CMD_INSTALL_WSL = 3,
@@ -74,7 +75,7 @@ int main() {
         printf("\033[;31m");
         printf("7. Exit\n");
         printf("\033[0m");
-    
+
         printf("Choose an option: ");
         if (scanf("%d", &opcao) != 1) {
             printf("Invalid input. Please enter a number.\n");
@@ -90,31 +91,37 @@ int main() {
 
     DWORD cmd;
     switch (opcao) {
-        case 1: cmd = CMD_ENABLE_WSL; 
+        case 1: cmd = CMD_ENABLE_WSL;
         printf("Enabling WSL...\n");
         break;
-        case 2: cmd = CMD_DISABLE_WSL; 
-        printf("Disabling WSL...\n"); 
+        case 2: cmd = CMD_DISABLE_WSL;
+        printf("Disabling WSL...\n");
         break;
-        case 3: cmd = CMD_INSTALL_WSL; 
-        printf("Installing WSL...\n"); 
+        case 3: cmd = CMD_INSTALL_WSL;
+        printf("Installing WSL...\n");
         break;
-        case 4: cmd = CMD_UNINSTALL_WSL; 
-        printf("Uninstalling WSL...\n"); 
+        case 4: cmd = CMD_UNINSTALL_WSL;
+        printf("Uninstalling WSL...\n");
         break;
-        case 5: cmd = CMD_UPDATE_WSL; 
-        printf("Updating WSL...\n"); 
+        case 5: cmd = CMD_UPDATE_WSL;
+        printf("Updating WSL...\n");
         break;
-        case 6: cmd = CMD_REPAIR_WSL; 
-        printf("Repairing WSL...\n"); 
+        case 6: cmd = CMD_REPAIR_WSL;
+        printf("Repairing WSL...\n");
         break;
         case 7:
-            printf("Exiting...\n");
+            printf("Closing pipe and service...");
+            cmd = CMD_NONE;
+            DWORD bytesWritten;
+            if (WriteFile(hPipe, &cmd, sizeof(DWORD), &bytesWritten, NULL)) {
+                printf("Failed to sent shutdown command.\n");
+            }
             CloseHandle(hPipe);
-            Sleep(10000); // Aguarda 10 segundos antes de sair
+            printf("Exiting...\n");
+            Sleep(1000); // Aguarda 10 segundos antes de sair
             return 0;
-        default: 
-        printf("Invalid option\n"); 
+        default:
+        printf("Invalid option\n");
         continue;
     }
 
@@ -142,9 +149,8 @@ int main() {
         } else {
             printf("Failed to execute command.\n");
             printf("Response code: %lu\n", resposta.codigo);
-        }       
-    }  
+        }
+    }
 
-    CloseHandle(hPipe);
     return 0;
 }
