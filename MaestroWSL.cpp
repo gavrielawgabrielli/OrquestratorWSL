@@ -173,8 +173,11 @@ DWORD WINAPI PipeWorkerThread(LPVOID lpParam) {
 
         BOOL connected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
         if (connected) {
-            if (ReadFile(hPipe, &comandoRecebido, sizeof(DWORD), &bytesRead, NULL)) {
-                if (comandoRecebido = CMD_NONE) {
+            DWORD tempComando = 0;
+            if (ReadFile(hPipe, &tempComando, sizeof(DWORD), &bytesRead, NULL)) {
+                comandoRecebido = tempComando;
+
+                if (comandoRecebido == CMD_NONE) {
                     DisconnectNamedPipe(hPipe);
                     CloseHandle(hPipe);
                     break;
