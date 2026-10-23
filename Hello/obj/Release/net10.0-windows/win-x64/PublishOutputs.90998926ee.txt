@@ -1,0 +1,2 @@
+/home/Katz/codes/coding/OrquestratorWSL/Hello/publish/windows/Hello.pdb
+/home/Katz/codes/coding/OrquestratorWSL/Hello/publish/windows/Hello.exe

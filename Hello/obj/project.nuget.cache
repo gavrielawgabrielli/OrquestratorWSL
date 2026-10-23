@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "ro3ohkU+CWc=",
+  "success": true,
+  "projectFilePath": "/home/Katz/codes/coding/OrquestratorWSL/Hello/Hello.csproj",
+  "expectedPackageFiles": [
+    "/home/Katz/.nuget/packages/microsoft.net.illink.tasks/10.0.13/microsoft.net.illink.tasks.10.0.13.nupkg.sha512",
+    "/home/Katz/.nuget/packages/microsoft.netcore.app.runtime.win-x64/10.0.13/microsoft.netcore.app.runtime.win-x64.10.0.13.nupkg.sha512",
+    "/home/Katz/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.13/microsoft.aspnetcore.app.ref.10.0.13.nupkg.sha512",
+    "/home/Katz/.nuget/packages/microsoft.aspnetcore.app.runtime.win-x64/10.0.13/microsoft.aspnetcore.app.runtime.win-x64.10.0.13.nupkg.sha512",
+    "/home/Katz/.nuget/packages/microsoft.netcore.app.host.win-x64/10.0.13/microsoft.netcore.app.host.win-x64.10.0.13.nupkg.sha512"
+  ],
+  "logs": []
+}

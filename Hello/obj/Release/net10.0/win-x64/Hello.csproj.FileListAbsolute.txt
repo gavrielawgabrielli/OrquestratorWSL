@@ -1,0 +1,15 @@
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Release/net10.0/win-x64/Hello.exe
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Release/net10.0/win-x64/Hello.deps.json
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Release/net10.0/win-x64/Hello.runtimeconfig.json
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Release/net10.0/win-x64/Hello.dll
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Release/net10.0/win-x64/Hello.pdb
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.GeneratedMSBuildEditorConfig.editorconfig
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.AssemblyInfoInputs.cache
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.AssemblyInfo.cs
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.csproj.CoreCompileInputs.cache
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.sourcelink.json
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.dll
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/refint/Hello.dll
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.pdb
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/Hello.genruntimeconfig.cache
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Release/net10.0/win-x64/ref/Hello.dll

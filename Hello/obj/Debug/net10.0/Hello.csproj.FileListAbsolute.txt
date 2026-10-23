@@ -1,0 +1,15 @@
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Debug/net10.0/Hello
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Debug/net10.0/Hello.deps.json
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Debug/net10.0/Hello.runtimeconfig.json
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Debug/net10.0/Hello.dll
+/home/Katz/codes/coding/OrquestratorWSL/Hello/bin/Debug/net10.0/Hello.pdb
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.GeneratedMSBuildEditorConfig.editorconfig
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.AssemblyInfoInputs.cache
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.AssemblyInfo.cs
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.csproj.CoreCompileInputs.cache
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.sourcelink.json
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.dll
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/refint/Hello.dll
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.pdb
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/Hello.genruntimeconfig.cache
+/home/Katz/codes/coding/OrquestratorWSL/Hello/obj/Debug/net10.0/ref/Hello.dll
