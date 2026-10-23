@@ -8,3 +8,6 @@ The WSL orquestrator is a very lazy CLI program. It will problably recieve some 
 
 BE AWARE!
 The Orquestrator will execute low level commands in your computer. It's normally safe to use, but I do not recommend using such app for playing arround.
+
+
+This is simply a stupid project made in the worst way possible. It may change tho.
