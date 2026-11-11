@@ -1,3 +1,4 @@
+#include <system_error>
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
@@ -153,6 +154,7 @@ DWORD WINAPI PipeWorkerThread(LPVOID lpParam) {
     DWORD bytesRead, bytesWritten;
     DWORD comandoRecebido = 0;
     RespostaWSL resposta = {0};
+    BOOL encerrarServico = FALSE;
 
     while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
         hPipe = CreateNamedPipeA(
@@ -173,26 +175,37 @@ DWORD WINAPI PipeWorkerThread(LPVOID lpParam) {
 
         BOOL connected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
         if (connected) {
-            DWORD tempComando = 0;
-            if (ReadFile(hPipe, &tempComando, sizeof(DWORD), &bytesRead, NULL)) {
-                comandoRecebido = tempComando;
+            while (WaitForSingleObject(g_StopEvent, 0) != WAIT_OBJECT_0) {
+                DWORD tempComand = 0;
 
-                if (comandoRecebido == CMD_NONE) {
-                    DisconnectNamedPipe(hPipe);
-                    CloseHandle(hPipe);
+                if (!ReadFile(hPipe, &tempComand, sizeof(DWORD), &bytesRead, NULL)
+                    || bytesRead != sizeof(DWORD)) {
+                        break;
+            }
+
+            comandoRecebido = tempComand;
+
+            if (comandoRecebido == CMD_NONE) {
+                encerrarServico = TRUE;
+                break;
+            }
+
+            ProcessarComando(comandoRecebido, &resposta);
+
+            if (!WriteFile(hPipe, &resposta, sizeof(RespostaWSL), &bytesWritten, NULL)
+                || bytesWritten != sizeof(RespostaWSL)) {
                     break;
                 }
-                ProcessarComando(comandoRecebido, &resposta);
-                // Envia a estrutura completa de uma vez
-                WriteFile(hPipe, &resposta, sizeof(RespostaWSL), &bytesWritten, NULL);
             }
         }
 
         DisconnectNamedPipe(hPipe);
         CloseHandle(hPipe);
+
+    if (encerrarServico) {break;}
+            }
+        return 0;
     }
-    return 0;
-}
 
 void ProcessarComando(DWORD cmd, RespostaWSL *pResposta) {
     pResposta->codigo = 200;       // sucesso por padrão

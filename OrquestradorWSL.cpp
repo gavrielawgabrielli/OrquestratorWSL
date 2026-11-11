@@ -46,6 +46,7 @@ int main() {
     printf("\033[;96m");
     printf("===============================\n");
     printf("\033[;0m");
+    printf("\n");
 
     int opcao;
     while(1) {
@@ -89,7 +90,7 @@ int main() {
             continue;
         }
 
-    DWORD cmd;
+    DWORD cmd = CMD_NONE;
     switch (opcao) {
         case 1: cmd = CMD_ENABLE_WSL;
         printf("Enabling WSL...\n");
@@ -113,7 +114,7 @@ int main() {
             printf("Closing pipe and service...");
             cmd = CMD_NONE;
             DWORD bytesWritten;
-            if (WriteFile(hPipe, &cmd, sizeof(DWORD), &bytesWritten, NULL)) {
+            if (!WriteFile(hPipe, &cmd, sizeof(DWORD), &bytesWritten, NULL)) {
                 printf("Failed to sent shutdown command.\n");
             }
             CloseHandle(hPipe);
@@ -124,6 +125,7 @@ int main() {
         printf("Invalid option\n");
         continue;
     }
+
 
      DWORD bytesWritten, bytesRead;
         RespostaWSL resposta = {0};
